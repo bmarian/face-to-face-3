@@ -78,17 +78,17 @@ const useLanguage = () => {
   const userLanguage = ref(userData.language);
   const languages = ref([
     {
-      icon: 'https://lipis.github.io/flag-icon-css/flags/4x3/us.svg',
-      text: t('english'),
-      id: 'en-US',
-    },
-    {
       icon: 'https://lipis.github.io/flag-icon-css/flags/4x3/ro.svg',
       text: t('romanian'),
       id: 'ro-RO',
     },
+    {
+      icon: 'https://lipis.github.io/flag-icon-css/flags/4x3/us.svg',
+      text: t('english'),
+      id: 'en-US',
+    },
   ]);
-  const selectedLanguage = ref({ ...languages.value[1] });
+  const selectedLanguage = ref({ ...languages.value[0] });
 
   watch(selectedLanguage, ({ id }) => {
     store.dispatch('application/setUserLanguage', id)
