@@ -1,1 +1,26 @@
-// app global css in SCSS form
+.body--dark {
+  background: $gray !important;
+}
+
+.ftf-page-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+
+  & .ftf-background {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+
+    &__top {
+      position: absolute;
+      top: 0;
+    }
+
+    &__bottom {
+      position: absolute;
+      bottom: 0;
+    }
+  }
+}

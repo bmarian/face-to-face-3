@@ -1,14 +1,18 @@
 const routes = [
   {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('layouts/FtfLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/Index.vue') },
+      {
+        path: '',
+        component: () => import('pages/FtfCreateRoomPage.vue'),
+      },
+      {
+        path: '/room/:roomId',
+        component: () => import('pages/FtfCreateRoomPage.vue'),
+      },
     ],
   },
-
-  // Always leave this as last one,
-  // but you can also remove it
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/Error404.vue'),
