@@ -70,6 +70,7 @@ module.exports = {
     'prefer-promise-reject-errors': 'off',
 
     'max-len': 'off',
+    'no-unused-vars': 'off',
 
 
     // allow debugger during development only

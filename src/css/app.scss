@@ -1,12 +1,8 @@
 .body--dark {
-  background: $gray !important;
+  background-color: $gray !important;
 }
 
 .ftf-page-container {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-
   & .ftf-background {
     position: absolute;
     height: 100vh;
@@ -22,5 +18,12 @@
       position: absolute;
       bottom: 0;
     }
+  }
+
+  & .ftf-content {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
   }
 }
