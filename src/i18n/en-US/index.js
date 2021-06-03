@@ -7,4 +7,5 @@ export default {
   english: 'English',
   name: 'Name',
   roomId: 'Room Id',
+  anonymousUser: 'Anonymous',
 };

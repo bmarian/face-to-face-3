@@ -102,10 +102,11 @@ const useLanguage = () => {
 
 const useUserData = () => {
   const store = useStore();
+  const { t } = useI18n({ useScope: 'global' });
 
   const userData = store.getters['application/userData'];
   const userColor = ref(userData.color);
-  const userName = ref(userData.name);
+  const userName = ref(userData.name || t('anonymousUser'));
 
   const roomId = ref(store.getters['application/roomId']);
 
