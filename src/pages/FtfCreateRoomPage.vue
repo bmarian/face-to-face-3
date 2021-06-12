@@ -197,7 +197,7 @@ const useUserData = () => {
   };
 };
 
-const useCamera = (roomId, finishSettingBasicInfo) => {
+const useUserStream = (roomId, finishSettingBasicInfo) => {
   const store = useStore();
   const router = useRouter();
 
@@ -263,7 +263,10 @@ const useCamera = (roomId, finishSettingBasicInfo) => {
     initializeUserVideo(constraints);
   });
 
-  const finish = () => { router.push(`/room/${roomId.value}`); };
+  const finish = () => {
+    userStream.value.getTracks().forEach((track) => { track.stop(); });
+    router.push(`/room/${roomId.value}`);
+  };
 
   return {
     userVideo,
@@ -281,7 +284,7 @@ export default defineComponent({
   setup() {
     const language = useLanguage();
     const userData = useUserData();
-    const camera = useCamera(userData.roomId, userData.finishSettingBasicInfo);
+    const camera = useUserStream(userData.roomId, userData.finishSettingBasicInfo);
 
     return { ...language, ...userData, ...camera };
   },
