@@ -8,4 +8,7 @@ export default {
   name: 'Nume',
   roomId: 'Codul camerei',
   anonymousUser: 'Anonymous',
+  camera: 'Cameră',
+  microphone: 'Microfon',
+  finish: 'Finalizează',
 };

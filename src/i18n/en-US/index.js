@@ -8,4 +8,7 @@ export default {
   name: 'Name',
   roomId: 'Room Id',
   anonymousUser: 'Anonymous',
+  camera: 'Camera',
+  microphone: 'Microphone',
+  finish: 'Finish',
 };

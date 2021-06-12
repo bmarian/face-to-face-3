@@ -62,57 +62,54 @@
       <q-slide-transition>
         <q-card v-if="finishSettingBasicInfo" class="ftf-card q-ma-sm" flat bordered>
           <q-card-section class="col-5 flex flex-center">
-            <q-avatar class="ftf-avatar cursor-pointer" rounded>
-              <p class="text-h3 ftf-avatar__content flex flex-center">{{ userInitials }}</p>
-            </q-avatar>
+            <video class="ftf-user-stream" ref="userVideo" muted autoplay/>
           </q-card-section>
 
           <q-card-section class="q-pt-xs">
-            <q-input v-model="userName" :model-value="userName" :label="t('name')" />
-            <q-input v-model="roomId" :model-value="roomId" :label="t('roomId')" :disable="!userName || finishSettingBasicInfo"/>
+            <q-btn-dropdown
+              class="ftf-input-button q-mt-md"
+              flat
+              color="primary"
+              icon="videocam"
+              :label="selectedUserCamera?.label || t('camera')">
+              <q-list>
+                <q-item
+                  v-for="(camera, index) in userCameras" :key="index"
+                  clickable
+                  v-close-popup
+                  @click="selectedUserCamera = camera">
+                  <q-item-label>{{ camera.label }}</q-item-label>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
+            <br />
+            <q-btn-dropdown
+              class="ftf-input-button q-mt-lg"
+              flat
+              color="primary"
+              icon="mic"
+              :label="selectedUserMicrophone?.label || t('microphone')">
+              <q-list>
+                <q-item
+                  v-for="(microphone, index) in userMicrophones" :key="index"
+                  clickable
+                  v-close-popup
+                  @click="selectedUserMicrophone = microphone">
+                  <q-item-label>{{ microphone.label }}</q-item-label>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
           </q-card-section>
 
           <q-separator />
 
           <q-card-actions class="ftf-card-actions">
             <q-btn
-              v-if="canJoinRoom"
-              :disable="finishSettingBasicInfo"
               flat
               color="primary"
-              @click="joinRoom">
-              {{t('joinRoom')}}
+              @click="finish">
+              {{t('finish')}}
             </q-btn>
-            <q-btn
-              v-else
-              :disable="!userName || finishSettingBasicInfo"
-              flat
-              color="primary"
-              @click="createRoom">
-              {{t('createRoom')}}
-            </q-btn>
-
-            <q-btn-dropdown flat color="primary" :disable="finishSettingBasicInfo">
-              <template v-slot:label>
-                <q-img width="1.5rem" :src="selectedLanguage.icon"/>
-              </template>
-              <q-list>
-                <q-item
-                  style="padding-right: 1.8rem"
-                  v-for="(language, index) in languages" :key="index"
-                  clickable
-                  v-close-popup
-                  @click="selectedLanguage = language">
-
-                  <q-item-section>
-                    <q-img width="1.5rem" :src="language.icon"/>
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{ language.text }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-btn-dropdown>
           </q-card-actions>
         </q-card>
       </q-slide-transition>
@@ -169,7 +166,7 @@ const useUserData = () => {
 
   const roomId = ref(store.getters['application/roomId']);
 
-  const finishSettingBasicInfo = ref(true);
+  const finishSettingBasicInfo = ref(false);
 
   const textColor = computed(() => helpers.textColor(userColor.value));
   const userInitials = computed(() => helpers.userInitials(userName.value));
@@ -200,18 +197,93 @@ const useUserData = () => {
   };
 };
 
-const useCamera = () => {
+const useCamera = (roomId, finishSettingBasicInfo) => {
   const store = useStore();
   const router = useRouter();
-  const { t } = useI18n({ useScope: 'global' });
 
-  return {};
+  const userVideo = ref(null);
+  const userStream = ref(null);
+
+  const userMicrophones = ref([]);
+  const userCameras = ref([]);
+
+  const selectedUserMicrophone = ref(null);
+  const selectedUserCamera = ref(null);
+
+  const initializeUserVideo = (constraints = { video: true, audio: true }) => new Promise((resolve, reject) => {
+    navigator?.mediaDevices?.getUserMedia?.(constraints)
+      .then((stream) => {
+        userStream.value = stream;
+        userVideo.value.srcObject = userStream.value;
+
+        resolve();
+      })
+      .catch((error) => reject(error));
+  });
+  const getUserMediaData = () => new Promise((resolve, reject) => {
+    navigator?.mediaDevices?.enumerateDevices?.()
+      .then((devices) => {
+        const separatedDevices = devices.reduce((sd, device) => {
+          if (!sd[device.kind]) return { ...sd, [device.kind]: [device] };
+          return { ...sd, [device.kind]: [...sd[device.kind], device] };
+        }, {});
+        resolve(separatedDevices);
+      })
+      .catch((error) => reject(error));
+  });
+
+  watch(finishSettingBasicInfo, (newValue) => {
+    if (!newValue) return;
+    initializeUserVideo().then(() => {
+      getUserMediaData().then((devices) => {
+        console.log(devices);
+
+        userMicrophones.value = devices.audioinput;
+        userCameras.value = devices.videoinput;
+
+        selectedUserMicrophone.value = devices.audioinput?.[0];
+        selectedUserCamera.value = devices.videoinput?.[0];
+      }).catch((error) => console.log(error));
+    });
+  });
+
+  watch(selectedUserMicrophone, (newValue) => {
+    store.dispatch('application/setUserMicrophone', newValue);
+  });
+  watch(selectedUserCamera, (newValue, oldValue) => {
+    store.dispatch('application/setUserCamera', newValue);
+
+    if (!oldValue || newValue.deviceId === oldValue.deviceId) return;
+
+    userStream.value.getTracks().forEach((track) => { track.stop(); });
+    const constraints = {
+      audio: { deviceId: selectedUserMicrophone.value.deviceId ? { exact: selectedUserMicrophone.value.deviceId } : undefined },
+      video: { deviceId: selectedUserCamera.value.deviceId ? { exact: selectedUserCamera.value.deviceId } : undefined },
+    };
+    initializeUserVideo(constraints);
+  });
+
+  const finish = () => { router.push(`/room/${roomId.value}`); };
+
+  return {
+    userVideo,
+    userStream,
+    userMicrophones,
+    selectedUserMicrophone,
+    userCameras,
+    selectedUserCamera,
+    finish,
+  };
 };
 
 export default defineComponent({
   name: 'FtfCreateRoomPage',
   setup() {
-    return { ...useLanguage(), ...useUserData(), ...useCamera() };
+    const language = useLanguage();
+    const userData = useUserData();
+    const camera = useCamera(userData.roomId, userData.finishSettingBasicInfo);
+
+    return { ...language, ...userData, ...camera };
   },
 });
 </script>
@@ -246,5 +318,17 @@ export default defineComponent({
 }
 .ftf-card {
   min-width: 17rem;
+}
+.ftf-user-stream {
+  width: 10rem;
+  height: 10rem;
+}
+.ftf-input-button {
+  width: 15rem;
+
+  & .q-btn__content > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>
