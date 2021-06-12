@@ -9,7 +9,7 @@ const routes = [
       },
       {
         path: '/room/:roomId',
-        component: () => import('pages/FtfCreateRoomPage.vue'),
+        component: () => import('pages/FtfRoomPage.vue'),
       },
     ],
   },
