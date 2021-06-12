@@ -24,9 +24,9 @@ module.exports = configure((ctx) => ({
   // https://v2.quasar.dev/quasar-cli/boot-files
   boot: [
     'i18n',
+    'openvidu',
     'axios',
     'helpers',
-    'openvidu',
   ],
 
   // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css

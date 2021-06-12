@@ -7,6 +7,7 @@
   "private": true,
   "scripts": {
     "run": "quasar dev",
+    "run-openvidu": "docker run -p 4443:4443 --rm -e OPENVIDU_SECRET=123Diana openvidu/openvidu-server-kms:2.18.0",
     "lint": "eslint --ext .js,.vue ./",
     "test": "echo \"No test specified\" && exit 0"
   },
