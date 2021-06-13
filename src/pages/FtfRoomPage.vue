@@ -1,120 +1,94 @@
 <template>
   <q-page class="ftf-content__page">
+    <div v-if="showPageOverlay" class="ftf-content__page-overlay" />
     <div class="ftf-content__page-content">
-      <ftf-video :streamManager="publisher" :self="true"/>
-      <ftf-video v-for="sub in subscribers" :key="sub.stream.connection.connectionId" :streamManager="sub" />
+      <div v-if="finishedSettingUpUserVideo" class="ftf-room">
+        <ftf-video :streamManager="publisher" :muted="true"/>
+        <ftf-video v-for="sub in subscribers" :key="sub.stream.connection.connectionId" :streamManager="sub" />
+      </div>
+      <div v-else class="ftf-room-user-video-setup">
+        <q-card class="ftf-card" flat bordered>
+          <q-card-section class="col-5 flex flex-center">
+            <ftf-video class="ftf-user-stream" :streamManager="userPublisher" :muted="true"/>
+          </q-card-section>
+
+          <q-card-section class="q-pt-xs">
+            <q-btn-dropdown
+              class="ftf-input-button q-mt-md"
+              flat
+              color="primary"
+              icon="videocam"
+              :label="selectedCamera?.label || t('camera')">
+              <q-list>
+                <q-item
+                  v-for="(camera, index) in availableCameras" :key="index"
+                  clickable
+                  v-close-popup
+                  @click="selectedCamera = camera">
+                  <q-item-label>{{ camera.label }}</q-item-label>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
+            <br />
+            <q-btn-dropdown
+              class="ftf-input-button q-mt-lg"
+              flat
+              color="primary"
+              icon="mic"
+              :label="selectedMicrophone?.label || t('microphone')">
+              <q-list>
+                <q-item
+                  v-for="(microphone, index) in availableMicrophones" :key="index"
+                  clickable
+                  v-close-popup
+                  @click="selectedMicrophone = microphone">
+                  <q-item-label>{{ microphone.label }}</q-item-label>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
+          </q-card-section>
+
+          <q-separator />
+
+          <q-card-actions class="ftf-card-actions">
+            <q-btn
+              class="ftf-input-button"
+              flat
+              color="primary"
+              @click="finishSettingUpUserVideo">
+              {{t('finish')}}
+            </q-btn>
+          </q-card-actions>
+        </q-card>
+      </div>
     </div>
   </q-page>
 </template>
 
 <script>
-import {
-  defineComponent, ref, watch, computed, onMounted,
-} from 'vue';
-import { useStore } from 'vuex';
-import { helpers } from 'boot/helpers';
+import { defineComponent, ref } from 'vue';
+import FtfVideo from 'components/FtfVideo/FtfVideo';
+import useOpenvidu from 'src/composables/useOpenvidu';
+import useUserStream from 'src/composables/userStream';
 import { useI18n } from 'vue-i18n';
-import { openVidu } from 'boot/openvidu';
-import { api } from 'boot/axios';
-import FtfVideo from 'components/FtfVideo';
-
-const getToken = (sessionId) => {
-  const auth = {
-    username: openVidu.user,
-    password: openVidu.secret,
-  };
-  const createSession = () => new Promise((resolve, reject) => {
-    api.post('/openvidu/api/sessions', JSON.stringify({ customSessionId: sessionId }), { auth })
-      .then((response) => response.data)
-      .then((data) => resolve(data?.id))
-      .catch((error) => {
-        if (error.response.status === 409) return resolve(sessionId);
-
-        // This part is only on dev env. This should never end up on production!
-        const confirmation = `No connection to OpenVidu Server. This may be a certificate error at ${openVidu.ip}\n\nClick OK to navigate and accept it. If no certificate warning is shown, then check that your OpenVidu Server is up and running at "${openVidu.ip}"`;
-        // eslint-disable-next-line no-restricted-globals,no-alert
-        if (window.confirm(confirmation)) location.assign(`${openVidu.ip}/accept-certificate`);
-
-        return reject(error.response);
-      });
-  });
-  const createToken = () => new Promise((resolve, reject) => {
-    api.post(`/openvidu/api/sessions/${sessionId}/connection`, {}, { auth })
-      .then((response) => response.data)
-      .then((data) => resolve(data?.token))
-      .catch((error) => reject(error.response));
-  });
-  return createSession().then(() => createToken());
-};
-
-const useVideoStreaming = () => {
-  const store = useStore();
-
-  const OV = ref(null);
-  const session = ref(null);
-  const publisher = ref(null);
-  const subscribers = ref([]);
-  const sessionId = ref(store.getters['application/roomId']);
-  const userId = ref(store.getters['application/userData']?.name);
-  const preferredVideoData = ref(store.getters['application/preferredVideoData']);
-
-  const joinSession = () => {
-    OV.value = new openVidu.OpenVidu();
-    session.value = OV.value.initSession();
-
-    session.value.on('streamCreated', ({ stream }) => {
-      const subscriber = session.value.subscribe(stream);
-      subscribers.value.push(subscriber);
-    });
-
-    session.value.on('streamDestroyed', ({ stream }) => {
-      const index = subscribers.value.indexOf(stream.streamManager, 0);
-      if (index >= 0) subscribers.value.splice(index, 1);
-    });
-
-    session.value.on('exception', ({ exception }) => {
-      console.warn(exception);
-    });
-
-    getToken(sessionId.value).then((token) => {
-      session.value.connect(token, { clientData: userId })
-        .then(() => {
-          publisher.value = OV.value.initPublisher(undefined, {
-            audioSource: preferredVideoData.value.microphone.deviceId || undefined, // The source of audio. If undefined default microphone
-            videoSource: preferredVideoData.value.camera.deviceId || undefined, // The source of video. If undefined default webcam
-            publishAudio: true, // Whether you want to start publishing with your audio unmuted or not
-            publishVideo: true, // Whether you want to start publishing with your video enabled or not
-            insertMode: 'APPEND', // How the video is inserted in the target element 'video-container'
-            mirror: false, // Whether to mirror your local video or not
-          });
-          session.value.publish(publisher.value);
-        })
-        .catch((error) => console.log('There was an error connecting to the session:', error.code, error.message));
-    });
-  };
-
-  onMounted(() => {
-    joinSession();
-  });
-
-  return {
-    OV,
-    session,
-    publisher,
-    subscribers,
-    sessionId,
-    userId,
-    joinSession,
-  };
-};
 
 export default defineComponent({
   name: 'FtfRoomPage',
   components: { FtfVideo },
   setup() {
-    const videoStreaming = useVideoStreaming();
+    const { t } = useI18n({ useScope: 'global' });
+    const finishedSettingUpUserVideo = ref(false);
+    const showPageOverlay = ref(false);
+    const openvidu = useOpenvidu();
+    const userStream = useUserStream(openvidu, finishedSettingUpUserVideo, showPageOverlay);
 
-    return { ...videoStreaming };
+    return {
+      t,
+      showPageOverlay,
+      finishedSettingUpUserVideo,
+      ...openvidu,
+      ...userStream,
+    };
   },
 });
 </script>
@@ -131,6 +105,34 @@ export default defineComponent({
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+    }
+
+    &-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+
+      background-color: $gray;
+      opacity: 0.8;
+    }
+  }
+}
+.ftf-room-user-video-setup {
+  & .ftf-user-stream {
+    width: 25rem;
+    height: 25rem;
+  }
+
+  & .ftf-input-button {
+    width: 100%;
+
+    & .q-btn__content > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
