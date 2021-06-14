@@ -9,7 +9,7 @@
       <div v-else class="ftf-room-user-video-setup">
         <q-card class="ftf-card" flat bordered>
           <q-card-section class="col-5 flex flex-center">
-            <ftf-video class="ftf-user-stream" :streamManager="userPublisher" :muted="true"/>
+            <ftf-video-player class="ftf-user-stream" :mediaStream="userMediaStream" :muted="true"/>
           </q-card-section>
 
           <q-card-section class="q-pt-xs">
@@ -66,22 +66,31 @@
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
 import FtfVideo from 'components/FtfVideo/FtfVideo';
 import useOpenvidu from 'src/composables/useOpenvidu';
 import useUserStream from 'src/composables/userStream';
 import { useI18n } from 'vue-i18n';
+import FtfVideoPlayer from 'components/FtfVideo/FtfVideoPlayer';
+import { useRoute } from 'vue-router';
+import { useStore } from 'vuex';
 
 export default defineComponent({
   name: 'FtfRoomPage',
-  components: { FtfVideo },
+  components: { FtfVideoPlayer, FtfVideo },
   setup() {
     const { t } = useI18n({ useScope: 'global' });
+
     const finishedSettingUpUserVideo = ref(false);
     const showPageOverlay = ref(false);
     const openvidu = useOpenvidu();
     const userStream = useUserStream(openvidu, finishedSettingUpUserVideo, showPageOverlay);
 
+    onMounted(() => {
+      const store = useStore();
+      const route = useRoute();
+      store.dispatch('application/setRoomId', route?.params?.roomId);
+    });
     return {
       t,
       showPageOverlay,

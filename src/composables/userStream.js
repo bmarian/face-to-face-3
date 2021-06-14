@@ -3,11 +3,12 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
+import { helpers } from 'boot/helpers';
 
 const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUserVideo, showPageOverlay) => {
   const store = useStore();
 
-  const userPublisher = ref(undefined);
+  const userMediaStream = ref(undefined);
 
   const availableMicrophones = ref([]);
   const availableCameras = ref([]);
@@ -27,17 +28,13 @@ const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUser
       .catch((error) => reject(error));
   });
 
-  const initializeUserMedia = () => new Promise((resolve, reject) => {
-    try {
-      userPublisher.value = OV.value.initPublisher(undefined, {
-        publishAudio: true,
-        publishVideo: true,
-        insertMode: 'APPEND',
-        mirror: true,
-      });
-
-      resolve();
-    } catch (error) { reject(error); }
+  const initializeUserMedia = (constraints = { videoSource: undefined, audioSource: undefined }) => new Promise((resolve, reject) => {
+    OV.value.getUserMedia(constraints)
+      .then((mediaStream) => {
+        userMediaStream.value = mediaStream;
+        resolve(mediaStream);
+      })
+      .catch((error) => reject(error));
   });
 
   const setUserMedia = (setDevices = false) => {
@@ -55,31 +52,31 @@ const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUser
       .catch((error) => console.warn(error));
   };
 
+  const replaceUserMediaStream = (reinitialize = true) => {
+    userMediaStream.value.getTracks().forEach((track) => track.stop());
+    const constraints = {
+      videoSource: selectedCamera.value.deviceId || undefined,
+      audioSource: selectedMicrophone.value.deviceId || undefined,
+    };
+
+    if (!reinitialize) return;
+    initializeUserMedia(constraints);
+  };
+
   const finishSettingUpUserVideo = () => {
     finishedSettingUpUserVideo.value = true;
     showPageOverlay.value = false;
 
-    joinSession(userPublisher.value);
+    replaceUserMediaStream(false);
+    helpers.delayedAction(() => { joinSession(); });
   };
 
   watch(selectedMicrophone, (newMicrophone, oldMicrophone) => {
     store.dispatch('application/setUserMicrophone', newMicrophone).then(() => {
       if (!oldMicrophone) return;
-      OV.value.getUserMedia({
-        audioSource: newMicrophone.deviceId || undefined,
-      }).then((newMediaStream) => {
-        const audioTrack = newMediaStream.getAudioTracks()?.[0];
-        if (!audioTrack) return;
 
-        userPublisher.value.replaceTrack(audioTrack)
-          .then(() => {
-            // newMediaStream.getTracks().forEach((track) => track.stop());
-            // newMediaStream = undefined;
-            console.log(userPublisher.value.videos);
-            console.log('Audio track changed');
-          })
-          .catch((error) => console.warn(error));
-      });
+      console.log('Changed microphone');
+      replaceUserMediaStream();
     });
   });
 
@@ -87,30 +84,8 @@ const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUser
     store.dispatch('application/setUserCamera', newCamera).then(() => {
       if (!oldCamera) return;
 
-      OV.value.initPublisher(userPublisher.value.videoReference, {
-        videoSource: newCamera.deviceId,
-        audioSource: selectedMicrophone.value.deviceId,
-        publishAudio: true,
-        publishVideo: true,
-        insertMode: 'APPEND',
-        mirror: true,
-      });
-
-      // OV.value.getUserMedia({
-      //   videoSource: newCamera.deviceId || undefined,
-      // }).then((newMediaStream) => {
-      //   const videoTrack = newMediaStream.getVideoTracks()?.[0];
-      //   if (!videoTrack) return;
-      //
-      //   userPublisher.value.replaceTrack(videoTrack)
-      //     .then(() => {
-      //       // newMediaStream.getTracks().forEach((track) => track.stop());
-      //       newMediaStream = undefined;
-      //       console.log(userPublisher.value.videos);
-      //       console.log('Video track changed');
-      //     })
-      //     .catch((error) => console.warn(error));
-      // });
+      console.log('Changed camera');
+      replaceUserMediaStream();
     });
   });
 
@@ -122,7 +97,7 @@ const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUser
   });
 
   return {
-    userPublisher,
+    userMediaStream,
     availableMicrophones,
     availableCameras,
     selectedMicrophone,

@@ -16,6 +16,9 @@ const helpers = {
   humanReadableRandomString(length = 5, format = 'kebab', extraOptions = {}) {
     return generateSlug(length, { format, ...extraOptions });
   },
+  delayedAction(action, delayAmount = 1000) {
+    setTimeout(action, delayAmount);
+  },
 };
 
 export default boot(({ app }) => {

@@ -66,7 +66,17 @@ const useOpenvidu = () => {
     getToken(sessionId.value).then((token) => {
       session.value.connect(token, { clientData: userId })
         .then(() => {
-          publisher.value = userPublisher;
+          if (userPublisher) publisher.value = userPublisher;
+          else {
+            publisher.value = OV.value.initPublisher(undefined, {
+              videoSource: preferredVideoData.value.camera.deviceId,
+              audioSource: preferredVideoData.value.microphone.deviceId,
+              publishVideo: true,
+              publishAudio: true,
+              insertMode: 'APPEND',
+              mirror: true,
+            });
+          }
           session.value.publish(publisher.value);
         })
         .catch((error) => console.log('There was an error connecting to the session:', error.code, error.message));
