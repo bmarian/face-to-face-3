@@ -64,7 +64,7 @@ const useOpenvidu = () => {
 
   const joinSession = (userPublisher) => {
     getToken(sessionId.value).then((token) => {
-      session.value.connect(token, { clientData: userId })
+      session.value.connect(token, { clientData: userId.value })
         .then(() => {
           if (userPublisher) publisher.value = userPublisher;
           else {

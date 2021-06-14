@@ -1,10 +1,15 @@
 <template>
   <q-page class="ftf-content__page">
-    <div v-if="showPageOverlay" class="ftf-content__page-overlay" />
+<!--    <div v-if="showPageOverlay" class="ftf-content__page-overlay" />-->
     <div class="ftf-content__page-content">
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
-        <ftf-video :streamManager="publisher" :muted="true"/>
-        <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
+        <div class="ftf-room__video-grid">
+          <div class="ftf-room__video-grid__content">
+            <ftf-video :streamManager="publisher" :muted="true"/>
+            <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
+          </div>
+        </div>
+        <div class="ftf-room__chat bg-accent"></div>
       </div>
       <div v-else class="ftf-room-user-video-setup">
         <q-card class="ftf-card" flat bordered>
@@ -128,6 +133,58 @@ export default defineComponent({
       background-color: $gray;
       opacity: 0.8;
     }
+  }
+}
+.ftf-room {
+  height: 100vh;
+  width: 100vw;
+
+  &__video-grid {
+    position: absolute;
+    left: 0;
+
+    width: 80%;
+    height: 100vh;
+
+    &__content {
+      width: 100%;
+      height: 100%;
+
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: 49vh 49vh;
+      gap: 0.8rem;
+      justify-items: stretch;
+
+      & :nth-child(-n+4) {
+        grid-column: auto / span 2;
+      }
+
+      & :first-child:nth-last-child(1) {
+        grid-column: auto / span 4;
+        grid-row: auto / span 2;
+      }
+
+      //for more info look here https://css-tricks.com/solved-with-css-logical-styling-based-on-the-number-of-given-elements/
+      & :first-child:nth-last-child(2),
+      & :first-child:nth-last-child(2) ~ div {
+        grid-column: auto / span 2;
+        grid-row: auto / span 2;
+      }
+
+      & :first-child:nth-last-child(3):last-child,
+      & :first-child:nth-last-child(3) ~ :last-child {
+        grid-column: 2 / span 2;
+      }
+    }
+  }
+
+  &__chat {
+    position: absolute;
+    right: 0;
+
+    width: 20%;
+    height: 100vh;
   }
 }
 .ftf-room-user-video-setup {
