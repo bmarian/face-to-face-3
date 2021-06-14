@@ -3,13 +3,13 @@
 <!--    <div v-if="showPageOverlay" class="ftf-content__page-overlay" />-->
     <div class="ftf-content__page-content">
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
-        <div class="ftf-room__video-grid">
+        <div class="ftf-room__video-grid" :style="`width: ${$q.platform.is.mobile ? 100 : 80}%`">
           <div class="ftf-room__video-grid__content">
             <ftf-video :streamManager="publisher" :muted="true"/>
             <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
           </div>
         </div>
-        <div class="ftf-room__chat bg-accent"></div>
+        <div v-if="!$q.platform.is.mobile" class="ftf-room__chat bg-accent"></div>
       </div>
       <div v-else class="ftf-room-user-video-setup">
         <q-card class="ftf-card" flat bordered>
@@ -79,12 +79,14 @@ import { useI18n } from 'vue-i18n';
 import FtfVideoPlayer from 'components/FtfVideo/FtfVideoPlayer';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
+import { useQuasar } from 'quasar';
 
 export default defineComponent({
   name: 'FtfRoomPage',
   components: { FtfVideoPlayer, FtfVideo },
   setup() {
     const { t } = useI18n({ useScope: 'global' });
+    const $q = useQuasar();
 
     const finishedSettingUpUserVideo = ref(false);
     const showPageOverlay = ref(false);
@@ -102,6 +104,7 @@ export default defineComponent({
       finishedSettingUpUserVideo,
       ...openvidu,
       ...userStream,
+      $q,
     };
   },
 });
@@ -143,7 +146,6 @@ export default defineComponent({
     position: absolute;
     left: 0;
 
-    width: 80%;
     height: 100vh;
 
     &__content {
