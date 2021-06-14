@@ -1,7 +1,7 @@
 import { boot } from 'quasar/wrappers';
 import { OpenVidu } from 'openvidu-browser';
 
-const production = true;
+const production = false;
 
 const openVidu = {
   OpenVidu,

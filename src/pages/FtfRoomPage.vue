@@ -4,7 +4,7 @@
     <div class="ftf-content__page-content">
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
         <ftf-video :streamManager="publisher" :muted="true"/>
-        <ftf-video v-for="sub in subscribers" :key="sub.stream.connection.connectionId" :streamManager="sub" />
+        <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
       </div>
       <div v-else class="ftf-room-user-video-setup">
         <q-card class="ftf-card" flat bordered>

@@ -4,9 +4,11 @@ import {
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { helpers } from 'boot/helpers';
+import { useQuasar } from 'quasar';
 
 const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUserVideo, showPageOverlay) => {
   const store = useStore();
+  const $q = useQuasar();
 
   const userMediaStream = ref(undefined);
 
@@ -29,9 +31,11 @@ const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUser
   });
 
   const initializeUserMedia = (constraints = { videoSource: undefined, audioSource: undefined }) => new Promise((resolve, reject) => {
+    $q.loading.show();
     OV.value.getUserMedia(constraints)
       .then((mediaStream) => {
         userMediaStream.value = mediaStream;
+        $q.loading.hide();
         resolve(mediaStream);
       })
       .catch((error) => reject(error));

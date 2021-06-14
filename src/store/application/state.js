@@ -17,5 +17,4 @@ export default () => ({
     microphone: null,
   },
   roomId: null,
-  isLoading: false,
 });
