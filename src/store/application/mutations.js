@@ -4,6 +4,7 @@ const SET_USER_NAME = (state, userName) => { state.userData.name = userName; ret
 const SET_ROOM_ID = (state, roomId) => { state.roomId = roomId; return roomId; };
 const SET_USER_MICROPHONE = (state, microphone) => { state.preferredVideoData.microphone = microphone; return microphone; };
 const SET_USER_CAMERA = (state, camera) => { state.preferredVideoData.camera = camera; return camera; };
+const SET_LOADING_STATE = (state, isLoading) => { state.isLoading = isLoading; return isLoading; };
 
 export {
   SET_USER_COLOR,
@@ -12,4 +13,5 @@ export {
   SET_ROOM_ID,
   SET_USER_MICROPHONE,
   SET_USER_CAMERA,
+  SET_LOADING_STATE,
 };

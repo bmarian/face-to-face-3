@@ -19,6 +19,9 @@ const helpers = {
   delayedAction(action, delayAmount = 1000) {
     setTimeout(action, delayAmount);
   },
+  setLoadingState(store, isLoading) {
+    return store.dispatch('application/setLoadingState', isLoading);
+  },
 };
 
 export default boot(({ app }) => {
