@@ -62,8 +62,19 @@ const useOpenvidu = () => {
     session.value.on('exception', ({ exception }) => { console.warn(exception); });
   };
 
+  const shareScreenSubscriber = ref(undefined);
+  const addSignalEvents = () => {
+    session.value.on('signal:event', ({ data, form, type }) => {
+      if (!subscribers.value.length) return;
+      shareScreenSubscriber.value = !data
+        ? undefined
+        : subscribers.value.find((subscriber) => subscriber.stream.streamId === data);
+    });
+  };
+
   const joinSession = (userPublisher) => {
     getToken(sessionId.value).then((token) => {
+      addSignalEvents();
       session.value.connect(token, { clientData: userId.value })
         .then(() => {
           if (userPublisher) publisher.value = userPublisher;
@@ -72,7 +83,7 @@ const useOpenvidu = () => {
               videoSource: preferredVideoData.value.camera.deviceId,
               audioSource: preferredVideoData.value.microphone.deviceId,
               publishVideo: true,
-              publishAudio: true,
+              publishAudio: false,
               insertMode: 'APPEND',
               mirror: true,
             });

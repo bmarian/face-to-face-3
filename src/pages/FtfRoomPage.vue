@@ -3,13 +3,26 @@
 <!--    <div v-if="showPageOverlay" class="ftf-content__page-overlay" />-->
     <div class="ftf-content__page-content">
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
-        <div class="ftf-room__video-grid" :style="`width: ${$q.platform.is.mobile ? 100 : 80}%`">
-          <div class="ftf-room__video-grid__content">
+        <div class="ftf-room__header">
+          <div class="ftf-room__header-content">
+            <q-btn flat rounded color="primary" :icon="screenShareState ? 'screen_share' : 'stop_screen_share'" @click="toggleScreenShare" />
+            <q-btn flat rounded color="primary" :icon="chatState ? 'chat' : 'speaker_notes_off'" @click="toggleChat"/>
+            <q-btn flat rounded color="primary" :icon="cameraState ? 'videocam' : 'videocam_off'" @click="toggleCamera"/>
+            <q-btn flat rounded color="primary" :icon="microphoneState ? 'mic' : 'mic_off'" @click="toggleMicrophone" />
+            <q-btn flat rounded color="negative" icon="phone" @click="disconnect" />
+          </div>
+        </div>
+        <div class="ftf-room__video-grid" :style="`width: ${!chatState || $q.platform.is.mobile ? 100 : 80}%`">
+          <div v-show="!screenShareState" class="ftf-room__video-grid__content">
             <ftf-video :streamManager="publisher" :muted="true"/>
             <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
           </div>
+
+          <div v-if="screenShareState" class="ftf-room__video-grid__screen-share">
+            <ftf-video :streamManager="publisher" :muted="true"/>
+          </div>
         </div>
-        <div v-if="!$q.platform.is.mobile" class="ftf-room__chat bg-accent"></div>
+        <div v-if="chatState && !$q.platform.is.mobile" class="ftf-room__chat bg-accent"></div>
       </div>
       <div v-else class="ftf-room-user-video-setup">
         <q-card class="ftf-card" flat bordered>
@@ -80,6 +93,7 @@ import FtfVideoPlayer from 'components/FtfVideo/FtfVideoPlayer';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useQuasar } from 'quasar';
+import useCommands from 'src/composables/useCommands';
 
 export default defineComponent({
   name: 'FtfRoomPage',
@@ -92,6 +106,7 @@ export default defineComponent({
     const showPageOverlay = ref(false);
     const openvidu = useOpenvidu();
     const userStream = useUserStream(openvidu, finishedSettingUpUserVideo, showPageOverlay);
+    const commands = useCommands(openvidu.session, openvidu.publisher, openvidu.OV);
 
     onMounted(() => {
       const store = useStore();
@@ -104,6 +119,7 @@ export default defineComponent({
       finishedSettingUpUserVideo,
       ...openvidu,
       ...userStream,
+      ...commands,
       $q,
     };
   },
@@ -133,20 +149,50 @@ export default defineComponent({
       width: 100vw;
       overflow: hidden;
 
-      background-color: $gray;
+      background-color: $primary;
+      box-shadow: 0.1rem 0.1rem 0.1rem $gray;
       opacity: 0.8;
     }
   }
 }
+
 .ftf-room {
   height: 100vh;
   width: 100vw;
+
+  &__header {
+    width: 100%;
+    height: 2.5rem;
+    border-color: rgba(255, 255, 255, 0.28);
+    background-color: $dark;
+
+    &-content {
+      height: 100%;
+      width: 100%;
+
+      padding-left: 2rem;
+      padding-right: 1rem;
+
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-content: center;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    &-icon {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+  }
 
   &__video-grid {
     position: absolute;
     left: 0;
 
-    height: 100vh;
+    height: calc(100vh - 2.5rem);
+    margin-top: 0.2rem;
 
     &__content {
       width: 100%;
@@ -154,7 +200,7 @@ export default defineComponent({
 
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
-      grid-template-rows: 49vh 49vh;
+      grid-template-rows: 49vh calc(49vh - 2.7rem);
       gap: 0.8rem;
       justify-items: stretch;
 
@@ -179,16 +225,36 @@ export default defineComponent({
         grid-column: 2 / span 2;
       }
     }
+
+    &__screen-share {
+      width: 100%;
+      height: 100%;
+
+      & .ftf-video-container {
+        border: 0;
+
+        & .ftf-video {
+          transform: rotateY(0) !important;
+          object-fit: contain;
+        }
+
+        & .ftf-video-label {
+          display: none;
+        }
+      }
+    }
   }
 
   &__chat {
     position: absolute;
+    margin-top: 0.2rem;
     right: 0;
 
     width: 20%;
-    height: 100vh;
+    height: calc(100vh - 2.7rem);
   }
 }
+
 .ftf-room-user-video-setup {
   & .ftf-user-stream {
     width: 25rem;

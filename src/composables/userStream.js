@@ -107,6 +107,7 @@ const useUserStream = ({ OV, createSession, joinSession }, finishedSettingUpUser
     selectedMicrophone,
     selectedCamera,
     finishSettingUpUserVideo,
+    replaceUserMediaStream,
   };
 };
 
