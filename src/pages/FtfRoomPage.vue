@@ -5,7 +5,7 @@
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
         <div class="ftf-room__header">
           <div class="ftf-room__header-content">
-            <q-btn flat rounded color="primary" :icon="screenShareState ? 'screen_share' : 'stop_screen_share'" @click="toggleScreenShare" />
+            <q-btn v-if="!subscriberShareScreening" flat rounded color="primary" :icon="screenShareState ? 'screen_share' : 'stop_screen_share'" @click="toggleScreenShare" />
             <q-btn flat rounded color="primary" :icon="chatState ? 'chat' : 'speaker_notes_off'" @click="toggleChat"/>
             <q-btn flat rounded color="primary" :icon="cameraState ? 'videocam' : 'videocam_off'" @click="toggleCamera"/>
             <q-btn flat rounded color="primary" :icon="microphoneState ? 'mic' : 'mic_off'" @click="toggleMicrophone" />
@@ -13,13 +13,13 @@
           </div>
         </div>
         <div class="ftf-room__video-grid" :style="`width: ${!chatState || $q.platform.is.mobile ? 100 : 80}%`">
-          <div v-show="!screenShareState" class="ftf-room__video-grid__content">
+          <div v-show="!shareScreenOngoing" class="ftf-room__video-grid__content">
             <ftf-video :streamManager="publisher" :muted="true"/>
             <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
           </div>
 
-          <div v-if="screenShareState" class="ftf-room__video-grid__screen-share">
-            <ftf-video :streamManager="publisher" :muted="true"/>
+          <div v-if="shareScreenOngoing" class="ftf-room__video-grid__screen-share">
+            <ftf-video :streamManager="shareScreenSubscriber || publisher" :muted="true"/>
           </div>
         </div>
         <div v-if="chatState && !$q.platform.is.mobile" class="ftf-room__chat bg-accent"></div>
@@ -84,7 +84,9 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from 'vue';
+import {
+  defineComponent, ref, onMounted, computed,
+} from 'vue';
 import FtfVideo from 'components/FtfVideo/FtfVideo';
 import useOpenvidu from 'src/composables/useOpenvidu';
 import useUserStream from 'src/composables/userStream';
@@ -108,6 +110,10 @@ export default defineComponent({
     const userStream = useUserStream(openvidu, finishedSettingUpUserVideo, showPageOverlay);
     const commands = useCommands(openvidu.session, openvidu.publisher, openvidu.OV);
 
+    const userShareScreening = computed(() => commands.screenShareState.value);
+    const subscriberShareScreening = computed(() => openvidu.subscribers.value.length && !!openvidu.shareScreenSubscriber.value);
+    const shareScreenOngoing = computed(() => userShareScreening.value || subscriberShareScreening.value);
+
     onMounted(() => {
       const store = useStore();
       const route = useRoute();
@@ -121,6 +127,9 @@ export default defineComponent({
       ...userStream,
       ...commands,
       $q,
+      userShareScreening,
+      subscriberShareScreening,
+      shareScreenOngoing,
     };
   },
 });

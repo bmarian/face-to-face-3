@@ -103,6 +103,7 @@ const useOpenvidu = () => {
     userId,
     createSession,
     joinSession,
+    shareScreenSubscriber,
   };
 };
 

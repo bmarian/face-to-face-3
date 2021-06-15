@@ -11,8 +11,14 @@ const useCommands = (session, publisher, OV) => {
   const router = useRouter();
 
   const disconnect = () => {
-    session.value.disconnect();
-    return router.push('/');
+    const goHome = () => {
+      session.value.disconnect();
+      return router.push('/');
+    };
+
+    session.value.signal({ data: '', type: 'event' })
+      .then(goHome)
+      .catch(goHome);
   };
 
   const microphoneState = ref(false);
@@ -38,12 +44,9 @@ const useCommands = (session, publisher, OV) => {
       OV.value.getUserMedia({ videoSource: store.getters['application/preferredVideoData'].camera.deviceId || undefined })
         .then((userMediaStream) => {
           const webcamTrack = userMediaStream.getVideoTracks()[0];
-          publisher.value.replaceTrack(webcamTrack).then(() => {
-            session.value.signal({
-              data: '',
-              type: 'event',
-            });
-          });
+
+          session.value.signal({ data: '', type: 'event' });
+          return publisher.value.replaceTrack(webcamTrack);
         })
         .catch((error) => console.warn(error));
     };
@@ -57,12 +60,8 @@ const useCommands = (session, publisher, OV) => {
             screenShareState.value = false;
           });
 
-          publisher.value.replaceTrack(screenShareTrack).then(() => {
-            session.value.signal({
-              data: publisher.stream.streamId,
-              type: 'event',
-            });
-          });
+          session.value.signal({ data: publisher.value?.stream?.streamId || '', type: 'event' });
+          return publisher.value.replaceTrack(screenShareTrack);
         })
         .catch((error) => console.warn(error));
     } else {
