@@ -72,6 +72,7 @@ module.exports = {
     'max-len': 'off',
     'no-unused-vars': 'off',
     'no-console': 'off',
+    'linebreak-style': 'off',
 
 
     // allow debugger during development only
