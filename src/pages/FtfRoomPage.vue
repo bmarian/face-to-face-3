@@ -1,6 +1,5 @@
 <template>
   <q-page class="ftf-content__page">
-<!--    <div v-if="showPageOverlay" class="ftf-content__page-overlay" />-->
     <div class="ftf-content__page-content">
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
         <div class="ftf-room__header">
