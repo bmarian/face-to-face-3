@@ -21,7 +21,11 @@
             <ftf-video :streamManager="shareScreenSubscriber || publisher" :muted="true"/>
           </div>
         </div>
-        <div v-if="chatState && !$q.platform.is.mobile" class="ftf-room__chat bg-accent"></div>
+        <div v-if="chatState && !$q.platform.is.mobile" class="ftf-room__chat">
+          <!--TODO: DO CHAT THINGHYS HERE-->
+          <p>Chat url:</p>
+          <p v-for="message in messages" :key="message">{{message}}</p>
+        </div>
       </div>
       <div v-else class="ftf-room-user-video-setup">
         <q-card class="ftf-card" flat bordered>
@@ -95,6 +99,7 @@ import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useQuasar } from 'quasar';
 import useCommands from 'src/composables/useCommands';
+import useChat from 'src/composables/useChat';
 
 export default defineComponent({
   name: 'FtfRoomPage',
@@ -108,6 +113,7 @@ export default defineComponent({
     const openvidu = useOpenvidu();
     const userStream = useUserStream(openvidu, finishedSettingUpUserVideo, showPageOverlay);
     const commands = useCommands(openvidu.session, openvidu.publisher, openvidu.OV);
+    const chat = useChat(openvidu.session);
 
     const userShareScreening = computed(() => commands.screenShareState.value);
     const subscriberShareScreening = computed(() => openvidu.subscribers.value.length && !!openvidu.shareScreenSubscriber.value);
@@ -125,6 +131,7 @@ export default defineComponent({
       ...openvidu,
       ...userStream,
       ...commands,
+      ...chat,
       $q,
       userShareScreening,
       subscriberShareScreening,
@@ -260,6 +267,7 @@ export default defineComponent({
 
     width: 20%;
     height: calc(100vh - 2.7rem);
+    overflow-y: auto;
   }
 }
 

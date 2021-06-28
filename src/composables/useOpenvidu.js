@@ -64,11 +64,22 @@ const useOpenvidu = () => {
 
   const shareScreenSubscriber = ref(undefined);
   const addSignalEvents = () => {
-    session.value.on('signal:event', ({ data, form, type }) => {
+    session.value.on('signal:event', ({ data }) => {
       if (!subscribers.value.length) return;
       shareScreenSubscriber.value = !data
         ? undefined
         : subscribers.value.find((subscriber) => subscriber.stream.streamId === data);
+    });
+
+    session.value.on('signal:chat', ({ data, from }) => {
+      const userName = JSON.parse(from.data || null)?.clientData;
+      const timeStamp = from?.creationTime;
+
+      return store.dispatch('application/addMessage', {
+        message: data,
+        userName,
+        timeStamp,
+      });
     });
   };
 
