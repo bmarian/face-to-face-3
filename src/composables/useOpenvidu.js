@@ -43,6 +43,7 @@ const useOpenvidu = () => {
   const subscribers = ref([]);
   const sessionId = computed(() => store.getters['application/roomId']);
   const userId = computed(() => store.getters['application/userData']?.name);
+  const userColor = computed(() => store.getters['application/userData']?.color);
   const preferredVideoData = computed(() => store.getters['application/preferredVideoData']);
 
   const createSession = () => {
@@ -86,7 +87,7 @@ const useOpenvidu = () => {
   const joinSession = (userPublisher) => {
     getToken(sessionId.value).then((token) => {
       addSignalEvents();
-      session.value.connect(token, { clientData: userId.value })
+      session.value.connect(token, { clientData: userId.value, clientColor: userColor.value })
         .then(() => {
           if (userPublisher) publisher.value = userPublisher;
           else {
