@@ -5,9 +5,11 @@ import { useStore } from 'vuex';
 import { helpers } from 'boot/helpers';
 import { useQuasar, date } from 'quasar';
 
-const useChat = (session) => {
+const useChat = (session, chatState) => {
   const store = useStore();
   const $q = useQuasar();
+  const messageArea = ref(undefined);
+  const chatMessage = ref('');
 
   const messages = computed(() => store.getters['application/messages']);
   const userData = computed(() => store.getters['application/userData']);
@@ -21,12 +23,6 @@ const useChat = (session) => {
       .then(() => console.log('Message sent'))
       .catch((error) => console.warn(error));
   };
-
-  onMounted(() => {
-    setInterval(() => {
-      sendMessage(`Hello my name is ${userData.value.name}`);
-    }, 10000);
-  });
 
   const timeElapsed = (timeStamp) => {
     const minutes = date.getDateDiff(Date.now(), timeStamp, 'minutes');
@@ -42,12 +38,38 @@ const useChat = (session) => {
 
   const isOwnerOfMessage = (sender) => sender === userData.value.name;
 
+  const clearEndingWhiteCharacters = () => {
+    chatMessage.value = chatMessage.value.replace(/^\s+|\s+$/g, '');
+    chatMessage.value.trim();
+  };
+
+  const handleKeyDown = (event) => {
+    if (!event.shiftKey && event.key === 'Enter') {
+      clearEndingWhiteCharacters();
+      sendMessage(chatMessage.value);
+    }
+  };
+
+  const clearChatBox = (event) => {
+    if (!event.shiftKey && event.key === 'Enter') chatMessage.value = '';
+  };
+
+  watch([messages, chatState], () => {
+    helpers.delayedAction(() => {
+      messageArea.value.scrollTop = messageArea.value.scrollHeight;
+    }, 500);
+  });
+
   return {
     messages,
     sendMessage,
     timeElapsed,
     isOwnerOfMessage,
     roomId,
+    messageArea,
+    chatMessage,
+    handleKeyDown,
+    clearChatBox,
   };
 };
 

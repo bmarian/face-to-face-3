@@ -73,11 +73,14 @@ const useOpenvidu = () => {
     });
 
     session.value.on('signal:chat', ({ data, from }) => {
-      const userName = JSON.parse(from.data || null)?.clientData;
+      const formData = JSON.parse(from.data || null);
+      const userName = formData?.clientData;
+      const color = formData?.clientColor;
       const timeStamp = from?.creationTime;
 
       return store.dispatch('application/addMessage', {
         message: data,
+        userColor: color,
         userName,
         timeStamp,
       });

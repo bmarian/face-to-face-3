@@ -24,8 +24,7 @@
           </div>
         </div>
         <div v-if="chatState && !$q.platform.is.mobile" class="ftf-room__chat">
-          <!--TODO: DO CHAT THINGHYS HERE-->
-          <div class="ftf-room__chat__message-area">
+          <div class="ftf-room__chat__message-area" ref="messageArea">
             <div>
               <q-chat-message
                 name="System"
@@ -34,12 +33,19 @@
               />
               <div v-for="message in messages" :key="message">
                 <q-chat-message
-                  :name="isOwnerOfMessage(message.userName) ? 'me': message.userName"
-                  avatar="https://cdn.quasar.dev/img/avatar4.jpg"
+                  :name="isOwnerOfMessage(message.userName) ? t('Me'): message.userName"
                   :text="[message.message]"
                   :sent="!isOwnerOfMessage(message.userName)"
                   :stamp="timeElapsed(message.timeStamp)"
-                />
+                >
+                  <template v-slot:avatar>
+                    <div class="q-mx-sm">
+                      <q-avatar :style="{background: message.userColor, color: helpers.textColor(message.userColor)}">
+                        {{helpers.userInitials(message.userName)}}
+                      </q-avatar>
+                    </div>
+                  </template>
+                </q-chat-message>
               </div>
             </div>
           </div>
@@ -55,11 +61,7 @@
             class="ftf-room__chat__text-box"
             borderless
             @keydown="handleKeyDown"
-            @keyup="clearChatBox"
-            model-value="">
-            <template v-slot:append>
-              <q-btn flat color="white" icon="send" @click="sendMessage(chatMessage)"/>
-            </template>
+            @keyup="clearChatBox">
           </q-input>
         </div>
       </div>
@@ -136,6 +138,7 @@ import { useStore } from 'vuex';
 import { useQuasar } from 'quasar';
 import useCommands from 'src/composables/useCommands';
 import useChat from 'src/composables/useChat';
+import { helpers } from 'boot/helpers';
 
 export default defineComponent({
   name: 'FtfRoomPage',
@@ -152,7 +155,7 @@ export default defineComponent({
     const openvidu = useOpenvidu();
     const userStream = useUserStream(openvidu, finishedSettingUpUserVideo, showPageOverlay);
     const commands = useCommands(openvidu.session, openvidu.publisher, openvidu.OV);
-    const chat = useChat(openvidu.session);
+    const chat = useChat(openvidu.session, commands.chatState);
 
     const userShareScreening = computed(() => commands.screenShareState.value);
     const subscriberShareScreening = computed(() => openvidu.subscribers.value.length && !!openvidu.shareScreenSubscriber.value);
@@ -175,6 +178,7 @@ export default defineComponent({
       userShareScreening,
       subscriberShareScreening,
       shareScreenOngoing,
+      helpers,
     };
   },
 });
