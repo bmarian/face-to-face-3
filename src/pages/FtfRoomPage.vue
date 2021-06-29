@@ -27,16 +27,18 @@
           <div class="ftf-room__chat__message-area" ref="messageArea">
             <div>
               <q-chat-message
-                name="System"
-                :text="[`The room id is: ${roomId}`]"
+                :name="t('systemMessage')"
+                :text="[`${t('roomIdIs')}: <span class='ftf-room__chat__message-area__room-id'>${roomId}</span>`]"
+                :text-html="true"
                 sent
               />
               <div v-for="message in messages" :key="message">
                 <q-chat-message
-                  :name="isOwnerOfMessage(message.userName) ? t('Me'): message.userName"
+                  :name="isMessageOwner(message.userName) ? t('me'): message.userName"
                   :text="[message.message]"
-                  :sent="!isOwnerOfMessage(message.userName)"
+                  :sent="!isMessageOwner(message.userName)"
                   :stamp="timeElapsed(message.timeStamp)"
+                  :text-html="true"
                 >
                   <template v-slot:avatar>
                     <div class="q-mx-sm">
@@ -322,6 +324,11 @@ export default defineComponent({
       padding-right: 1rem;
       overflow-y: auto;
       overflow-x: hidden;
+
+      &__room-id {
+        text-decoration: underline;
+        cursor: pointer;
+      }
     }
   }
 }

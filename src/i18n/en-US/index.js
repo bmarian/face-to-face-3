@@ -11,4 +11,13 @@ export default {
   camera: 'Camera',
   microphone: 'Microphone',
   finish: 'Finish',
+  me: 'Me',
+  roomIdIs: 'The room id is',
+  systemMessage: 'System message',
+  hour: 'hour',
+  hours: 'hours',
+  minute: 'minute',
+  minutes: 'minutes',
+  ago: 'ago',
+  lessThenAMinuteAgo: 'less then a minute ago',
 };

@@ -11,4 +11,13 @@ export default {
   camera: 'Cameră',
   microphone: 'Microfon',
   finish: 'Finalizează',
+  me: 'Eu',
+  roomIdIs: 'Id-ul camerei este',
+  systemMessage: 'Mesaj de sistem',
+  hour: 'oră',
+  hours: 'ore',
+  minute: 'minut',
+  minutes: 'minute',
+  ago: 'în urmă',
+  lessThenAMinuteAgo: 'acum mai puțin de un minut',
 };

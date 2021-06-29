@@ -3,12 +3,14 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import { helpers } from 'boot/helpers';
-import { useQuasar, date } from 'quasar';
+import { date } from 'quasar';
+import { useI18n } from 'vue-i18n';
 
 const useChat = (session, chatState) => {
   const store = useStore();
-  const $q = useQuasar();
+  const { t } = useI18n({ useScope: 'global' });
   const messageArea = ref(undefined);
+  const currentTime = ref(Date.now());
   const chatMessage = ref('');
 
   const messages = computed(() => store.getters['application/messages']);
@@ -25,18 +27,18 @@ const useChat = (session, chatState) => {
   };
 
   const timeElapsed = (timeStamp) => {
-    const minutes = date.getDateDiff(Date.now(), timeStamp, 'minutes');
+    const minutes = date.getDateDiff(currentTime.value, timeStamp, 'minutes');
     const hours = Math.floor(minutes / 60);
 
     if (hours > 0) {
-      const hoursString = `${hours === 1 ? 'hour' : 'hours'} ago`;
+      const hoursString = `${hours === 1 ? t('hour') : t('hours')} ${t('ago')}`;
       return `${hours} ${hoursString}`;
     }
-    const minString = `${minutes === 1 ? 'minute' : 'minutes'} ago`;
-    return minutes === 0 ? 'less then a minute ago' : `${minutes} ${minString}`;
+    const minString = `${minutes === 1 ? t('minute') : t('minutes')} ${t('ago')}`;
+    return minutes === 0 ? t('lessThenAMinuteAgo') : `${minutes} ${minString}`;
   };
 
-  const isOwnerOfMessage = (sender) => sender === userData.value.name;
+  const isMessageOwner = (sender) => sender === userData.value.name;
 
   const clearEndingWhiteCharacters = () => {
     chatMessage.value = chatMessage.value.replace(/^\s+|\s+$/g, '');
@@ -60,11 +62,17 @@ const useChat = (session, chatState) => {
     }, 500);
   });
 
+  onMounted(() => {
+    setInterval(() => {
+      currentTime.value = Date.now();
+    }, 60000);
+  });
+
   return {
     messages,
     sendMessage,
     timeElapsed,
-    isOwnerOfMessage,
+    isMessageOwner,
     roomId,
     messageArea,
     chatMessage,
