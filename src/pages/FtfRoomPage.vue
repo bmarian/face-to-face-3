@@ -4,17 +4,19 @@
       <div v-if="finishedSettingUpUserVideo" class="ftf-room">
         <div class="ftf-room__header">
           <div class="ftf-room__header-content">
-            <q-btn v-if="!subscriberShareScreening" flat rounded color="primary" :icon="screenShareState ? 'screen_share' : 'stop_screen_share'" @click="toggleScreenShare" />
+            <q-btn v-if="!subscriberShareScreening" flat rounded color="primary"
+                   :icon="screenShareState ? 'screen_share' : 'stop_screen_share'" @click="toggleScreenShare"/>
             <q-btn flat rounded color="primary" :icon="chatState ? 'chat' : 'speaker_notes_off'" @click="toggleChat"/>
-            <q-btn flat rounded color="primary" :icon="cameraState ? 'videocam' : 'videocam_off'" @click="toggleCamera"/>
-            <q-btn flat rounded color="primary" :icon="microphoneState ? 'mic' : 'mic_off'" @click="toggleMicrophone" />
-            <q-btn flat rounded color="negative" icon="phone" @click="disconnect" />
+            <q-btn flat rounded color="primary" :icon="cameraState ? 'videocam' : 'videocam_off'"
+                   @click="toggleCamera"/>
+            <q-btn flat rounded color="primary" :icon="microphoneState ? 'mic' : 'mic_off'" @click="toggleMicrophone"/>
+            <q-btn flat rounded color="negative" icon="phone" @click="disconnect"/>
           </div>
         </div>
         <div class="ftf-room__video-grid" :style="`width: ${!chatState || $q.platform.is.mobile ? 100 : 80}%`">
           <div v-show="!shareScreenOngoing" class="ftf-room__video-grid__content">
             <ftf-video :streamManager="publisher" :muted="true"/>
-            <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub" />
+            <ftf-video v-for="sub in subscribers" :key="sub?.stream?.connection?.connectionId" :streamManager="sub"/>
           </div>
 
           <div v-if="shareScreenOngoing" class="ftf-room__video-grid__screen-share">
@@ -23,8 +25,42 @@
         </div>
         <div v-if="chatState && !$q.platform.is.mobile" class="ftf-room__chat">
           <!--TODO: DO CHAT THINGHYS HERE-->
-          <p>Chat url:</p>
-          <p v-for="message in messages" :key="message">{{message}}</p>
+          <div class="ftf-room__chat__message-area">
+            <div>
+              <q-chat-message
+                name="System"
+                :text="[`The room id is: ${roomId}`]"
+                sent
+              />
+              <div v-for="message in messages" :key="message">
+                <q-chat-message
+                  :name="isOwnerOfMessage(message.userName) ? 'me': message.userName"
+                  avatar="https://cdn.quasar.dev/img/avatar4.jpg"
+                  :text="[message.message]"
+                  :sent="!isOwnerOfMessage(message.userName)"
+                  :stamp="timeElapsed(message.timeStamp)"
+                />
+              </div>
+            </div>
+          </div>
+          <q-input
+            v-model="chatMessage"
+            filled
+            color="dark"
+            placeholder="Sent a message"
+            type="textarea"
+            style=""
+            input-style="resize: none"
+            bg-color="gray"
+            class="ftf-room__chat__text-box"
+            borderless
+            @keydown="handleKeyDown"
+            @keyup="clearChatBox"
+            model-value="">
+            <template v-slot:append>
+              <q-btn flat color="white" icon="send" @click="sendMessage(chatMessage)"/>
+            </template>
+          </q-input>
         </div>
       </div>
       <div v-else class="ftf-room-user-video-setup">
@@ -50,7 +86,7 @@
                 </q-item>
               </q-list>
             </q-btn-dropdown>
-            <br />
+            <br/>
             <q-btn-dropdown
               class="ftf-input-button q-mt-lg"
               flat
@@ -69,7 +105,7 @@
             </q-btn-dropdown>
           </q-card-section>
 
-          <q-separator />
+          <q-separator/>
 
           <q-card-actions class="ftf-card-actions">
             <q-btn
@@ -77,7 +113,7 @@
               flat
               color="primary"
               @click="finishSettingUpUserVideo">
-              {{t('finish')}}
+              {{ t('finish') }}
             </q-btn>
           </q-card-actions>
         </q-card>
@@ -103,7 +139,10 @@ import useChat from 'src/composables/useChat';
 
 export default defineComponent({
   name: 'FtfRoomPage',
-  components: { FtfVideoPlayer, FtfVideo },
+  components: {
+    FtfVideoPlayer,
+    FtfVideo,
+  },
   setup() {
     const { t } = useI18n({ useScope: 'global' });
     const $q = useQuasar();
@@ -267,7 +306,19 @@ export default defineComponent({
 
     width: 20%;
     height: calc(100vh - 2.7rem);
-    overflow-y: auto;
+    padding-left: 0.5rem;
+
+    &__text-box {
+      height: 16%;
+      padding-right: 0.5rem;
+    }
+
+    &__message-area {
+      height: 84%;
+      padding-right: 1rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
   }
 }
 
