@@ -87,7 +87,7 @@ const useOpenvidu = () => {
   const joinSession = (userPublisher) => {
     getToken(sessionId.value).then((token) => {
       addSignalEvents();
-      session.value.connect(token, { clientData: userId.value, clientColor: userColor })
+      session.value.connect(token, { clientData: userId.value, clientColor: userColor.value })
         .then(() => {
           if (userPublisher) publisher.value = userPublisher;
           else {
