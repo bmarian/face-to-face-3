@@ -313,6 +313,7 @@ export default defineComponent({
     width: 20%;
     height: calc(100vh - 2.7rem);
     padding-left: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
 
     &__text-box {
       height: 16%;
